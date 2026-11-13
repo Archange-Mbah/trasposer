@@ -1,0 +1,203 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root {
+  --canvas: #ffffff;
+  --surface: #ffffff;
+  --subtle: #f5f8fc;
+  --muted: #eaf0f7;
+  --line: #e3e9f1;
+  --line-strong: #cfd8e4;
+  --ink: #0f172a;
+  --ink-2: #475569;
+  --ink-3: #8391a7;
+  --ink-4: #b4bfce;
+  --accent: #2563eb;
+  --accent-hover: #1d4ed8;
+  --accent-soft: #eaf1ff;
+  --accent-softer: #f4f8ff;
+  --accent-ink: #1e40af;
+  --accent-line: #c3d6fd;
+  --chord-bg: #eaf1ff;
+  --chord-fg: #1d4ed8;
+  --chord-line: #cddcfc;
+  --warn: #b45309;
+  --warn-soft: #fef6e7;
+  --ok: #15803d;
+  --danger: #dc2626;
+  --shadow-sm: 0 1px 2px rgb(15 23 42 / 0.05);
+  --shadow-md: 0 1px 2px rgb(15 23 42 / 0.04), 0 4px 16px -4px rgb(15 23 42 / 0.08);
+  --shadow-lg: 0 2px 4px rgb(15 23 42 / 0.04), 0 16px 40px -8px rgb(15 23 42 / 0.16);
+}
+
+.dark {
+  --canvas: #0b1120;
+  --surface: #0f172a;
+  --subtle: #141d33;
+  --muted: #1c2740;
+  --line: #1f2a42;
+  --line-strong: #2c3a57;
+  --ink: #e8eef8;
+  --ink-2: #a3b1c6;
+  --ink-3: #6b7a92;
+  --ink-4: #46536a;
+  --accent: #60a5fa;
+  --accent-hover: #93c5fd;
+  --accent-soft: rgb(96 165 250 / 0.14);
+  --accent-softer: rgb(96 165 250 / 0.07);
+  --accent-ink: #bfdbfe;
+  --accent-line: rgb(96 165 250 / 0.35);
+  --chord-bg: rgb(96 165 250 / 0.14);
+  --chord-fg: #93c5fd;
+  --chord-line: rgb(96 165 250 / 0.3);
+  --warn: #f59e0b;
+  --warn-soft: rgb(245 158 11 / 0.1);
+  --ok: #4ade80;
+  --danger: #f87171;
+  --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.3);
+  --shadow-md: 0 1px 2px rgb(0 0 0 / 0.3), 0 4px 16px -4px rgb(0 0 0 / 0.4);
+  --shadow-lg: 0 2px 4px rgb(0 0 0 / 0.3), 0 16px 40px -8px rgb(0 0 0 / 0.55);
+}
+
+@theme inline {
+  --color-canvas: var(--canvas);
+  --color-surface: var(--surface);
+  --color-subtle: var(--subtle);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-ink: var(--ink);
+  --color-ink-2: var(--ink-2);
+  --color-ink-3: var(--ink-3);
+  --color-ink-4: var(--ink-4);
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-soft: var(--accent-soft);
+  --color-accent-softer: var(--accent-softer);
+  --color-accent-ink: var(--accent-ink);
+  --color-accent-line: var(--accent-line);
+  --color-chord-bg: var(--chord-bg);
+  --color-chord-fg: var(--chord-fg);
+  --color-chord-line: var(--chord-line);
+  --color-warn: var(--warn);
+  --color-warn-soft: var(--warn-soft);
+  --color-ok: var(--ok);
+  --color-danger: var(--danger);
+  --shadow-sm: var(--shadow-sm);
+  --shadow-md: var(--shadow-md);
+  --shadow-lg: var(--shadow-lg);
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-serif: var(--font-newsreader), ui-serif, Georgia, serif;
+  --font-mono: ui-monospace, "SF Mono", Menlo, monospace;
+  --animate-pop: pop 140ms cubic-bezier(0.2, 0.9, 0.3, 1.2);
+  --animate-fade: fade 160ms ease-out;
+  --animate-slide-in: slide-in 220ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+@keyframes pop {
+  from { opacity: 0; transform: scale(0.92) translateY(2px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes fade {
+  from { opacity: 0; transform: translateY(-2px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes slide-in {
+  from { opacity: 0; transform: translateX(16px); }
+  to { opacity: 1; transform: none; }
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  background: var(--canvas);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  font-feature-settings: "cv11", "ss01";
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+::selection {
+  background: var(--accent-soft);
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--line-strong) transparent;
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* Text fields draw their own focus treatment. */
+input:focus-visible,
+textarea:focus-visible {
+  outline: none;
+}
+
+/* ------------------------------------------------------------------------- */
+/* Editor typography                                                          */
+/* ------------------------------------------------------------------------- */
+
+.song-sheet {
+  --lyric-size: 19px;
+  --line-gap: 14px;
+  --lane-h: calc(var(--lyric-size) * 1.45);
+}
+
+.lyric-text {
+  font-size: var(--lyric-size);
+  line-height: 1.5;
+  white-space: pre;
+  letter-spacing: 0.002em;
+}
+
+.lyric-serif .lyric-text {
+  font-family: var(--font-serif);
+  font-optical-sizing: auto;
+  letter-spacing: 0;
+}
+
+.chord-pill {
+  font-size: max(12px, calc(var(--lyric-size) * 0.68));
+  font-feature-settings: "tnum", "ss01";
+}
+
+@media print {
+  @page {
+    margin: 16mm 14mm;
+  }
+  body {
+    background: white !important;
+    color: black !important;
+  }
+  .no-print {
+    display: none !important;
+  }
+  .print-flat {
+    overflow: visible !important;
+    height: auto !important;
+    max-width: none !important;
+    padding: 0 !important;
+  }
+  .chord-pill {
+    background: transparent !important;
+    border-color: transparent !important;
+    color: black !important;
+    box-shadow: none !important;
+    font-weight: 700 !important;
+  }
+  .chord-stem {
+    display: none !important;
+  }
+  .section-block {
+    break-inside: avoid;
+  }
+}
