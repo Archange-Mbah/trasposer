@@ -1,10 +1,10 @@
 "use client";
 
-import { AlertTriangle, ClipboardPaste, FileText, FileType2, Monitor, Moon, Sun, X } from "lucide-react";
+import { AlertTriangle, ClipboardPaste, FileText, FileType2, FileUp, Loader2, Monitor, Moon, Sun, X } from "lucide-react";
 import { type ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import { create } from "zustand";
 import { detectKey, keyLabel } from "@/lib/music/key";
-import { parseSongText } from "@/lib/song/parse";
+import { parseHeading, parseSongText } from "@/lib/song/parse";
 import { lineToText } from "@/lib/song/serialize";
 import { useSettings } from "@/store/settings";
 import { useSongs } from "@/store/songs";
@@ -250,14 +250,50 @@ Em          C
 or inline:  [G]Regier in mir, in deiner [D]Kraft`;
 
 function ImportDialog() {
-  const [tab, setTab] = useState<"paste" | "pdf" | "docx">("paste");
+  const [tab, setTab] = useState<"paste" | "file">("paste");
   const [text, setText] = useState("");
   const [title, setTitle] = useState("");
   const [forceLyric, setForceLyric] = useState<Set<number>>(new Set());
+  const [source, setSource] = useState<{ name: string; detail: string } | null>(null);
+  const [loading, setLoading] = useState<string | null>(null);
+  const [fileError, setFileError] = useState<string | null>(null);
+  const [dragOver, setDragOver] = useState(false);
   const textRef = useRef<HTMLTextAreaElement>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
   const close = useDialogs((s) => s.close);
 
   useEffect(() => textRef.current?.focus(), []);
+
+  const loadFile = async (file: File) => {
+    setFileError(null);
+    setLoading(file.name);
+    try {
+      const { extractText } = await import("@/lib/import/extract");
+      const res = await extractText(file);
+      // A lone short first line followed by a blank line is almost always the song title.
+      const m = /^([^\n]{1,60})\n\n/.exec(res.text);
+      const docTitle = m && !parseHeading(m[1]) && parseSongText(m[1]).chordCount === 0 && !m[1].includes("[") ? m[1].trim() : null;
+      setText(docTitle ? res.text.slice(m![0].length) : res.text);
+      setForceLyric(new Set());
+      setTitle((t) => t || docTitle || file.name.replace(/\.[^.]+$/, "").replace(/[_-]+/g, " ").trim());
+      const what = res.kind === "pdf" ? `PDF · ${res.pages} page${res.pages === 1 ? "" : "s"}` : res.kind === "docx" ? "Word document" : "Text file";
+      setSource({ name: file.name, detail: what });
+      setTab("paste");
+    } catch (e) {
+      const { ImportError } = await import("@/lib/import/extract");
+      setFileError(e instanceof ImportError ? e.message : "Something went wrong while reading this file.");
+      setTab("file");
+    } finally {
+      setLoading(null);
+    }
+  };
+
+  const onDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setDragOver(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file) void loadFile(file);
+  };
 
   const result = useMemo(() => parseSongText(text, { forceLyric }), [text, forceLyric]);
   const key = useMemo(
@@ -287,7 +323,7 @@ function ImportDialog() {
   return (
     <Modal
       title="Import lyrics"
-      description="Chords written above lines or in [brackets] are separated from the lyrics automatically."
+      description="Paste text or upload a PDF / Word file. Chords above lines or in [brackets] are separated from the lyrics automatically."
       width={980}
       footer={
         <>
@@ -305,27 +341,86 @@ function ImportDialog() {
         </>
       }
     >
-      <div className="mb-4 w-[330px] max-w-full">
-        <Segmented
-          value={tab}
-          onChange={setTab}
-          options={[
-            { value: "paste", label: <><ClipboardPaste size={13} /> Paste</> },
-            { value: "pdf", label: <><FileText size={13} /> PDF</> },
-            { value: "docx", label: <><FileType2 size={13} /> Word</> },
-          ]}
-        />
-      </div>
-      {tab !== "paste" ? (
-        <div className="flex h-[300px] flex-col items-center justify-center rounded-lg border border-dashed border-line-strong bg-subtle/50 text-center">
-          <p className="text-[14px] font-medium">{tab === "pdf" ? "PDF" : "Word (.docx)"} upload is coming next</p>
-          <p className="mt-1 max-w-sm text-[13px] text-ink-2">
-            For now, open the file, copy its text and paste it here. Line breaks are preserved, and chords are recognised.
-          </p>
-          <Button variant="outline" className="mt-4" onClick={() => setTab("paste")}>
-            Paste text instead
-          </Button>
+      <div
+        className="relative"
+        onDragOver={(e) => {
+          if (e.dataTransfer.types.includes("Files")) {
+            e.preventDefault();
+            setDragOver(true);
+          }
+        }}
+        onDragLeave={(e) => {
+          if (!e.currentTarget.contains(e.relatedTarget as Node)) setDragOver(false);
+        }}
+        onDrop={onDrop}
+      >
+      {dragOver && (
+        <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center rounded-lg border-2 border-dashed border-accent bg-accent-softer/90 text-[14px] font-medium text-accent">
+          Drop to import
         </div>
+      )}
+      <input
+        ref={fileRef}
+        type="file"
+        accept=".pdf,.docx,.txt,.cho,.chordpro,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain"
+        className="hidden"
+        onChange={(e) => {
+          const f = e.target.files?.[0];
+          if (f) void loadFile(f);
+          e.target.value = "";
+        }}
+      />
+      <div className="mb-4 flex flex-wrap items-center gap-3">
+        <div className="w-[260px] max-w-full">
+          <Segmented
+            value={tab}
+            onChange={setTab}
+            options={[
+              { value: "paste", label: <><ClipboardPaste size={13} /> {source ? "Text" : "Paste"}</> },
+              { value: "file", label: <><FileUp size={13} /> Upload file</> },
+            ]}
+          />
+        </div>
+        {source && tab === "paste" && (
+          <span className="flex min-w-0 items-center gap-1.5 text-[12.5px] text-ink-2">
+            <FileText size={13} className="shrink-0 text-accent" />
+            <span className="truncate font-medium text-ink">{source.name}</span>
+            <span className="shrink-0 text-ink-3">· {source.detail} · check the text, then import</span>
+          </span>
+        )}
+      </div>
+      {tab === "file" ? (
+        <button
+          type="button"
+          onClick={() => fileRef.current?.click()}
+          disabled={!!loading}
+          className="flex h-[300px] w-full flex-col items-center justify-center rounded-lg border border-dashed border-line-strong bg-subtle/50 text-center transition-colors hover:border-accent hover:bg-accent-softer"
+        >
+          {loading ? (
+            <>
+              <Loader2 size={22} className="animate-spin text-accent" />
+              <p className="mt-3 text-[14px] font-medium">Reading {loading}…</p>
+            </>
+          ) : (
+            <>
+              <div className="flex gap-2 text-accent">
+                <FileText size={22} />
+                <FileType2 size={22} />
+              </div>
+              <p className="mt-3 text-[14px] font-medium">Drop a PDF or Word file here, or click to choose</p>
+              <p className="mt-1 max-w-md text-[13px] text-ink-2">
+                Line breaks, verses and chords written above the lyrics are kept. You can check and fix the text before
+                it goes into the editor. Files are read on your device and never uploaded.
+              </p>
+              <p className="mt-2 text-[12px] text-ink-3">.pdf · .docx · .txt — up to 20 MB</p>
+            </>
+          )}
+          {fileError && (
+            <p className="mt-4 flex max-w-md items-start gap-1.5 rounded-md bg-warn-soft px-3 py-2 text-left text-[12.5px] text-warn">
+              <AlertTriangle size={13} className="mt-0.5 shrink-0" /> {fileError}
+            </p>
+          )}
+        </button>
       ) : (
         <div className="grid gap-4 md:grid-cols-2">
           <div className="flex flex-col gap-2">
@@ -409,6 +504,7 @@ function ImportDialog() {
           </div>
         </div>
       )}
+      </div>
     </Modal>
   );
 }

@@ -28,6 +28,10 @@ src/
     remap.ts        keeps chords attached to their characters while lyrics are edited
     parse.ts        text import: [inline] chords, chords-over-lyrics, headings, confidence flags
     serialize.ts    display view, plain-text and ChordPro export, assistant context
+  lib/import/       file import, all in the browser (nothing is uploaded)
+    extract.ts      PDF (pdf.js legacy build), .docx (mammoth) and .txt → plain text
+    pdf-layout.ts   rebuilds lines/paragraphs from positioned PDF text and re-aligns
+                    chords to the syllable below them by x-coordinate
   lib/persistence/  SongRepository interface (localStorage now, Supabase later)
   store/            zustand stores: songs (+undo/redo, autosave), editor interaction state, settings
   components/
@@ -47,6 +51,6 @@ src/
 
 ## Roadmap
 
-- **Phase 2:** PDF (pdf.js) and DOCX (mammoth) extraction feeding the existing `parseSongText` and correction UI.
+- **Phase 2:** done. Paste, PDF and Word import with preview and correction. Scanned PDFs (images only) would need OCR.
 - **Phase 3:** structured "suggest a change" proposals the user can preview and apply.
 - **Phase 4:** Supabase auth and storage behind `SongRepository`; server-side PDF export.
