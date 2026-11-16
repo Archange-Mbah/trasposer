@@ -8,7 +8,7 @@ import { AssistantPanel } from "../assistant/assistant-panel";
 import { SongSheet } from "../editor/song-sheet";
 import { cn } from "../ui/primitives";
 import { Dialogs, useDialogs } from "./dialogs";
-import { EditorToolbar } from "./editor-toolbar";
+import { EditorToolbar, MobileTransposeBar } from "./editor-toolbar";
 import { EmptyState } from "./empty-state";
 import { SongHeader } from "./song-header";
 import { Sidebar } from "./sidebar";
@@ -77,6 +77,7 @@ export function Workspace() {
                 <SongSheet song={song} />
               </div>
             </div>
+            <MobileTransposeBar song={song} />
           </>
         ) : (
           <EmptyState onOpenSidebar={isDesktop ? undefined : () => setSidebarOpen(true)} />

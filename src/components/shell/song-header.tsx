@@ -66,11 +66,17 @@ function FirstRunHint() {
   return (
     <div className="no-print mt-6 flex items-start gap-3 rounded-lg border border-line bg-surface px-3.5 py-3 text-[13px] leading-relaxed text-ink-2 shadow-sm">
       <Lightbulb size={16} className="mt-0.5 shrink-0 text-accent" />
-      <div className="flex-1">
+      {/* Touch devices get touch wording; mouse/keyboard users get shortcuts. */}
+      <div className="flex-1 [@media(pointer:coarse)]:hidden">
         <b className="font-semibold text-ink">Click just above any word</b> to place a chord. Type it, then press{" "}
         <Kbd>Space</Kbd> to jump to the next word. <b className="font-semibold text-ink">Drag</b> chords to move them —
         even to another line, or hold <Kbd>Alt</Kbd> to copy. Select a chord and use <Kbd>←</Kbd> <Kbd>→</Kbd> to nudge it. Press{" "}
         <Kbd>?</Kbd> for all shortcuts.
+      </div>
+      <div className="hidden flex-1 [@media(pointer:coarse)]:block">
+        <b className="font-semibold text-ink">Tap just above any word</b> to add a chord.{" "}
+        <b className="font-semibold text-ink">Drag</b> a chord to move it, or tap it to edit, copy or delete. Tap a lyric
+        to change the text. Use the <b className="font-semibold text-ink">− Key +</b> controls to transpose.
       </div>
       <button
         type="button"

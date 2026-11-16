@@ -103,7 +103,7 @@ export function ChordInput({
           valid || !touched ? "border-accent ring-accent/15" : "border-danger ring-danger/15",
         )}
       />
-      <div className="absolute left-0 top-full z-30 mt-1.5 w-max max-w-[300px] rounded-lg border border-line bg-surface p-1.5 shadow-lg">
+      <div className="absolute left-0 top-full z-30 mt-1.5 w-max max-w-[min(300px,calc(100vw-32px))] group-data-[edge=right]/draft:left-auto group-data-[edge=right]/draft:right-0 rounded-lg border border-line bg-surface p-1.5 shadow-lg">
         {!valid && touched ? (
           <p className="px-1 py-0.5 text-[12px] text-danger">
             “{trimmed}” isn’t a chord. Try G, Em, F#m7, Dsus4 or D/F#.

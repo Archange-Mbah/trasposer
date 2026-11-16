@@ -66,7 +66,8 @@ export function Tip({
   label: string;
   shortcut?: string;
   children: ReactNode;
-  side?: "bottom" | "top" | "right";
+  /** "bottom-end" right-aligns the tooltip, for buttons at the right edge of the screen. */
+  side?: "bottom" | "bottom-end" | "top" | "right";
 }) {
   return (
     <span className="group/tip relative inline-flex">
@@ -74,8 +75,10 @@ export function Tip({
       <span
         role="tooltip"
         className={cn(
-          "pointer-events-none absolute z-50 flex items-center gap-1.5 whitespace-nowrap rounded-md bg-ink px-2 py-1 text-[11.5px] font-medium text-canvas opacity-0 shadow-md transition-opacity delay-0 duration-100 group-hover/tip:opacity-100 group-hover/tip:delay-500",
+          // Touch screens have no hover: don't render tooltips there (they'd also widen the page).
+          "pointer-events-none absolute z-50 flex items-center [@media(hover:none)]:hidden gap-1.5 whitespace-nowrap rounded-md bg-ink px-2 py-1 text-[11.5px] font-medium text-canvas opacity-0 shadow-md transition-opacity delay-0 duration-100 group-hover/tip:opacity-100 group-hover/tip:delay-500",
           side === "bottom" && "left-1/2 top-full mt-1.5 -translate-x-1/2",
+          side === "bottom-end" && "right-0 top-full mt-1.5",
           side === "top" && "bottom-full left-1/2 mb-1.5 -translate-x-1/2",
           side === "right" && "left-full top-1/2 ml-2 -translate-y-1/2",
         )}
@@ -112,13 +115,16 @@ export function Popover({
   trigger,
   children,
   align = "start",
+  placement = "bottom",
   className,
   open: controlledOpen,
   onOpenChange,
 }: {
   trigger: (props: { open: boolean; toggle: () => void }) => ReactNode;
   children: ReactNode | ((close: () => void) => ReactNode);
-  align?: "start" | "end";
+  /** "stretch" spans the nearest positioned ancestor of the popover (used by the mobile bottom bar). */
+  align?: "start" | "end" | "stretch";
+  placement?: "bottom" | "top";
   className?: string;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
@@ -136,13 +142,14 @@ export function Popover({
   const close = useCallback(() => setOpen(false), [setOpen]);
   useDismiss(open, close, ref);
   return (
-    <div ref={ref} className="relative inline-flex">
+    <div ref={ref} className={cn("inline-flex", align !== "stretch" && "relative")}>
       {trigger({ open, toggle: () => setOpen(!open) })}
       {open && (
         <div
           className={cn(
-            "absolute top-full z-40 mt-1.5 animate-fade rounded-lg border border-line bg-surface p-1 shadow-lg",
-            align === "end" ? "right-0" : "left-0",
+            "absolute z-40 animate-fade rounded-lg border border-line bg-surface p-1 shadow-lg",
+            placement === "top" ? "bottom-full mb-2" : "top-full mt-1.5",
+            align === "end" ? "right-0" : align === "stretch" ? "inset-x-3 mx-auto" : "left-0",
             className,
           )}
         >

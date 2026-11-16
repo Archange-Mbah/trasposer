@@ -190,6 +190,9 @@ export const LineRow = memo(function LineRow({
     null;
 
   useLayoutEffect(() => {
+    // Popups attached to pills/inputs flip alignment near the edges so they stay on screen.
+    const rowWidth = rowRef.current?.clientWidth ?? 0;
+    const visibleRight = Math.min(rowWidth, window.innerWidth - (rowRef.current?.getBoundingClientRect().left ?? 0) - 8);
     let prevRight = -Infinity;
     for (const item of items) {
       const el = pillRefs.current.get(item.id);
@@ -197,6 +200,8 @@ export const LineRow = memo(function LineRow({
       const anchor = xOf(item.index);
       const left = Math.max(anchor - PILL_PAD, item.state === "origin" ? -Infinity : prevRight + PILL_GAP);
       el.style.transform = `translateX(${left}px)`;
+      const mid = left + el.offsetWidth / 2;
+      el.dataset.edge = mid < 90 ? "left" : mid > visibleRight - 90 ? "right" : "";
       if (item.state !== "origin") prevRight = left + el.offsetWidth;
       const stem = stemRefs.current.get(item.id);
       if (stem) {
@@ -208,7 +213,9 @@ export const LineRow = memo(function LineRow({
       ghostRef.current.style.transform = `translateX(${xOf(hoverIndex) - PILL_PAD}px)`;
     }
     if (draftRef.current && draft) {
-      draftRef.current.style.transform = `translateX(${xOf(draft.index) - PILL_PAD - 1}px)`;
+      const x = xOf(draft.index) - PILL_PAD - 1;
+      draftRef.current.style.transform = `translateX(${x}px)`;
+      draftRef.current.dataset.edge = x > visibleRight - 300 && x > 140 ? "right" : "";
     }
     const hl = highlightRef.current;
     if (hl) {
@@ -335,7 +342,7 @@ export const LineRow = memo(function LineRow({
       style={{ paddingBottom: "var(--line-gap)" }}
     >
       {/* Gutter actions */}
-      <div className="no-print absolute -left-9 bottom-[var(--line-gap)] flex h-[1.6em] items-center opacity-0 transition-opacity group-hover/line:opacity-100 [@media(hover:none)]:opacity-60">
+      <div className="no-print absolute -left-6 bottom-[var(--line-gap)] sm:-left-9 flex h-[1.6em] items-center opacity-0 transition-opacity group-hover/line:opacity-100 [@media(hover:none)]:opacity-60">
         <Popover
           trigger={({ toggle, open }) => (
             <button
@@ -466,7 +473,7 @@ export const LineRow = memo(function LineRow({
         )}
 
         {draft && (
-          <div ref={draftRef} className="absolute bottom-0 left-0 z-30 h-0">
+          <div ref={draftRef} className="group/draft absolute bottom-0 left-0 z-30 h-0">
             <ChordInput
               key={`${draft.chordId ?? "new"}:${draft.index}`}
               initial={draftChord ? display(draftChord.chord) : ""}
@@ -667,7 +674,7 @@ const ChordPill = memo(function ChordPill({
       <div
         ref={refCb}
         className={cn(
-          "absolute bottom-[4px] left-0 will-change-transform",
+          "group/pill absolute bottom-[4px] left-0 will-change-transform",
           item.state === "dragging" && "z-20",
           selected && "z-10",
           hidden && "invisible",
@@ -715,7 +722,7 @@ function PillToolbar({ lineId, chordId }: { lineId: string; chordId: string }) {
     "flex h-6 w-6 items-center justify-center rounded text-ink-3 transition-colors hover:bg-subtle hover:text-ink";
   return (
     <div
-      className="no-print absolute bottom-full left-1/2 z-30 mb-1.5 flex -translate-x-1/2 animate-pop items-center gap-0.5 rounded-lg border border-line bg-surface p-0.5 shadow-lg"
+      className="no-print absolute bottom-full left-1/2 z-30 mb-1.5 flex -translate-x-1/2 group-data-[edge=left]/pill:left-0 group-data-[edge=left]/pill:translate-x-0 group-data-[edge=right]/pill:left-auto group-data-[edge=right]/pill:right-0 group-data-[edge=right]/pill:translate-x-0 animate-pop items-center gap-0.5 rounded-lg border border-line bg-surface p-0.5 shadow-lg"
       onPointerDown={(e) => e.stopPropagation()}
     >
       <button type="button" className={btn} title="Move left (←)" onClick={() => nudgeChord(ref, "left")}>

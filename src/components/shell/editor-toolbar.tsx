@@ -45,8 +45,9 @@ export function EditorToolbar({ song, onOpenSidebar }: { song: Song; onOpenSideb
           <Menu size={17} />
         </Button>
       )}
-      <div className="flex min-w-0 items-center gap-1 pl-1">
+      <div className="flex min-w-0 flex-1 items-center gap-1 pl-1 sm:flex-none">
         <span className="truncate text-[13.5px] font-medium text-ink">{song.title || "Untitled song"}</span>
+        <span className="max-sm:hidden">
         <Tip label={song.favorite ? "Remove from favorites" : "Add to favorites"}>
           <Button
             icon
@@ -58,10 +59,14 @@ export function EditorToolbar({ song, onOpenSidebar }: { song: Song; onOpenSideb
             <Star size={14} fill={song.favorite ? "currentColor" : "none"} />
           </Button>
         </Tip>
+        </span>
       </div>
 
-      <div className="mx-auto flex items-center gap-1 pl-2">
-        <TransposeControl song={song} />
+      <div className="flex items-center gap-0.5 sm:mx-auto sm:gap-1 sm:pl-2">
+        {/* On phones transposing lives in the bottom bar (MobileTransposeBar). */}
+        <div className="hidden sm:flex">
+          <TransposeControl song={song} />
+        </div>
         <div className="mx-1.5 hidden h-5 w-px bg-line sm:block" />
         <Tip label="Undo" shortcut={`${mod}Z`}>
           <Button icon aria-label="Undo" disabled={!canUndo} onClick={undo}>
@@ -75,11 +80,11 @@ export function EditorToolbar({ song, onOpenSidebar }: { song: Song; onOpenSideb
         </Tip>
       </div>
 
-      <div className="flex items-center gap-1">
+      <div className="flex items-center gap-0.5 sm:gap-1">
         <SaveStatus />
         <DisplayMenu />
         <ExportMenu song={song} />
-        <Tip label={assistantOpen ? "Hide assistant" : "Show assistant"} shortcut={`${mod}/`}>
+        <Tip label={assistantOpen ? "Hide assistant" : "Show assistant"} shortcut={`${mod}/`} side="bottom-end">
           <Button
             icon
             aria-label="Toggle assistant"
@@ -94,36 +99,48 @@ export function EditorToolbar({ song, onOpenSidebar }: { song: Song; onOpenSideb
   );
 }
 
-function TransposeControl({ song }: { song: Song }) {
+/** Fixed bottom bar with the transpose controls, shown only on phones. */
+export function MobileTransposeBar({ song }: { song: Song }) {
+  return (
+    <div className="no-print fixed inset-x-0 bottom-0 z-30 flex justify-center border-t border-line bg-canvas px-3 pt-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] shadow-[0_-4px_16px_-8px_rgb(15_23_42/0.12)] sm:hidden">
+      <TransposeControl song={song} bar />
+    </div>
+  );
+}
+
+function TransposeControl({ song, bar = false }: { song: Song; bar?: boolean }) {
   const notation = useSettings((s) => s.notation);
   const setSettings = useSettings((s) => s.set);
   const view = songView(song, notation);
   const offset = song.transpose;
   const capo = capoSuggestion(view.currentKey);
+  const btn = bar ? "w-12" : "w-8";
 
   return (
     <div className="flex items-center">
-      <div className="flex h-8 items-center rounded-lg border border-line bg-surface shadow-sm">
+      <div className={cn("flex items-center rounded-lg border border-line bg-surface shadow-sm", bar ? "h-11" : "h-8")}>
         <Tip label="Transpose down" shortcut="[">
           <button
             type="button"
             aria-label="Transpose down a semitone"
             onClick={() => transposeActions.by(-1)}
-            className="flex h-full w-8 items-center justify-center rounded-l-lg text-ink-2 transition-colors hover:bg-subtle hover:text-ink"
+            className={cn("flex h-full items-center justify-center rounded-l-lg text-ink-2 transition-colors hover:bg-subtle hover:text-ink", btn)}
           >
-            <Minus size={14} />
+            <Minus size={bar ? 17 : 14} />
           </button>
         </Tip>
         <Popover
-          align="end"
-          className="w-[300px] p-3 max-sm:-right-16"
+          align={bar ? "stretch" : "end"}
+          placement={bar ? "top" : "bottom"}
+          className={cn("p-3", bar ? "max-w-[360px]" : "w-[300px]")}
           trigger={({ toggle, open }) => (
             <button
               type="button"
               onClick={toggle}
               aria-label="Choose key"
               className={cn(
-                "flex h-full min-w-[92px] items-center justify-center gap-1.5 border-x border-line px-2.5 text-[13px] transition-colors hover:bg-subtle",
+                "flex h-full items-center justify-center gap-1.5 border-x border-line px-2.5 transition-colors hover:bg-subtle",
+                bar ? "min-w-[130px] text-[15px]" : "min-w-[92px] text-[13px]",
                 open && "bg-subtle",
               )}
             >
@@ -145,15 +162,15 @@ function TransposeControl({ song }: { song: Song }) {
             type="button"
             aria-label="Transpose up a semitone"
             onClick={() => transposeActions.by(1)}
-            className="flex h-full w-8 items-center justify-center rounded-r-lg text-ink-2 transition-colors hover:bg-subtle hover:text-ink"
+            className={cn("flex h-full items-center justify-center rounded-r-lg text-ink-2 transition-colors hover:bg-subtle hover:text-ink", btn)}
           >
-            <Plus size={14} />
+            <Plus size={bar ? 17 : 14} />
           </button>
         </Tip>
       </div>
       {offset !== 0 && (
         <Tip label={`Reset to original key (${keyName(view.originalKey, notation)})`}>
-          <Button icon size="sm" className="ml-0.5" aria-label="Reset to original key" onClick={transposeActions.reset}>
+          <Button icon size={bar ? "md" : "sm"} className={bar ? "ml-1.5 h-11 w-11" : "ml-0.5"} aria-label="Reset to original key" onClick={transposeActions.reset}>
             <RotateCcw size={14} />
           </Button>
         </Tip>
@@ -293,7 +310,7 @@ function DisplayMenu() {
       align="end"
       className="w-[260px] p-3"
       trigger={({ toggle, open }) => (
-        <Tip label="Display">
+        <Tip label="Display" side="bottom-end">
           <Button icon aria-label="Display options" onClick={toggle} className={cn(open && "bg-muted text-ink")}>
             <Type size={16} />
           </Button>
